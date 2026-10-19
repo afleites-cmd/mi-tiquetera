@@ -6,8 +6,10 @@
 //  - Índices sobre status y dueDate (consultas del dashboard de Tesorería).
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Conexión directa (sin pooler) para migraciones. scripts/migrate.mjs la deriva sola.
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {

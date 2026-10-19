@@ -74,11 +74,12 @@ contraseña" por email, se agrega con un proveedor como Resend.
 3. En **Environment Variables** agregá:
    - `DATABASE_URL` → la connection string
    - `AUTH_SECRET` → una clave larga al azar (`openssl rand -base64 32`)
-4. **Deploy**. El build ejecuta `prisma generate` automáticamente.
-5. Una sola vez, desde tu computadora con el mismo `DATABASE_URL` en `.env`:
-   ```bash
-   npx prisma migrate deploy && npm run db:seed
-   ```
+4. **Deploy**. En cada publicación el build aplica las migraciones pendientes
+   (`scripts/migrate.mjs`) y genera el cliente de Prisma, así que la base se
+   mantiene al día sola.
+5. La primera vez, cargá los datos iniciales (sedes y usuarios de prueba): desde tu
+   computadora con el mismo `DATABASE_URL` en `.env`, `npm run db:seed`; o ejecutá
+   el SQL de `prisma/seed.sql` en el editor SQL de Neon.
 
 ### Archivos adjuntos
 
