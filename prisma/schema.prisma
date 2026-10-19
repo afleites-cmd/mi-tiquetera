@@ -1,0 +1,197 @@
+// ENTREGABLE 2: Modelo de Datos
+// Base: esquema propuesto por el usuario. Cambios aplicados:
+//  - Montos en Decimal(12,2) en vez de Float (Float pierde centavos; el SQL original ya usaba DECIMAL).
+//  - PaymentCondition incorpora SEMANAL (pedido en el formulario de facturas).
+//  - StatusHistory: auditoría de cada transición (quién, cuándo, de qué a qué).
+//  - Índices sobre status y dueDate (consultas del dashboard de Tesorería).
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  engineType      = "client"
+}
+
+enum Role {
+  SOLICITANTE
+  MANTENIMIENTO
+  GERENTE
+  TESORERIA
+}
+
+/// NUEVO -> EN_PRESUPUESTACION -> PENDIENTE_APROBACION -> AUTORIZADO -> PENDIENTE_PAGO -> FINALIZADO
+/// RECHAZADO: salida lateral desde PENDIENTE_APROBACION, vuelve a EN_PRESUPUESTACION.
+enum TicketStatus {
+  NUEVO
+  EN_PRESUPUESTACION
+  PENDIENTE_APROBACION
+  AUTORIZADO
+  PENDIENTE_PAGO
+  FINALIZADO
+  RECHAZADO
+}
+
+enum PaymentCondition {
+  INMEDIATO
+  CUENTA_CORRIENTE
+  SEMANAL
+  DIAS_30
+  DIAS_60
+}
+
+/// Semáforo de urgencia del ticket.
+///   VERDE    : puede esperar, se programa.
+///   AMARILLO : afecta la operación, atender en pocos días.
+///   ROJO     : emergencia (riesgo de seguridad, sin servicio, daño en curso).
+enum Priority {
+  VERDE
+  AMARILLO
+  ROJO
+}
+
+enum QuoteStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum PaymentMethod {
+  TRANSFERENCIA
+  CHEQUE
+  EFECTIVO
+  TARJETA
+  OTRO
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(SOLICITANTE)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  ticketsCreated Ticket[]        @relation("CreatedBy")
+  quotes         Quote[]         @relation("QuoteCreator")
+  quotesReviewed Quote[]         @relation("QuoteReviewer")
+  invoices       Invoice[]
+  payments       Payment[]
+  statusChanges  StatusHistory[]
+}
+
+model Location {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  tickets Ticket[]
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  locationId    String
+  location      Location     @relation(fields: [locationId], references: [id])
+  floor         String
+  specificPlace String
+  description   String
+  photoUrl      String?
+  status        TicketStatus @default(NUEVO)
+  priority      Priority     @default(VERDE)
+  /// Si Mantenimiento cambia la prioridad, queda registrado por qué.
+  priorityNote  String?
+  createdById   String
+  createdBy     User         @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  quotes   Quote[]
+  invoices Invoice[]
+  history  StatusHistory[]
+
+  @@index([status, priority])
+  @@index([locationId])
+}
+
+/// Un ticket puede tener varios presupuestos. Cada uno declara qué cubre:
+/// mano de obra, materiales, o ambos (ambos tildes). El ticket se autoriza cuando
+/// los presupuestos APROBADOS cubren las dos cosas (ver workflow.ts > quoteCoverage).
+model Quote {
+  id              String      @id @default(uuid())
+  ticketId        String
+  ticket          Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  supplier        String
+  amount          Decimal     @db.Decimal(12, 2)
+  detail          String?
+  fileUrl         String
+  coversLabor     Boolean     @default(false)
+  coversMaterials Boolean     @default(false)
+  status          QuoteStatus @default(PENDIENTE)
+  rejectionReason String?
+  reviewedById    String?
+  reviewedBy      User?       @relation("QuoteReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  createdById     String
+  createdBy       User        @relation("QuoteCreator", fields: [createdById], references: [id])
+  createdAt       DateTime    @default(now())
+
+  invoice Invoice?
+
+  @@index([ticketId, status])
+}
+
+/// Una factura por presupuesto aprobado (mano de obra y materiales pueden ser
+/// proveedores distintos). El ticket pasa a PENDIENTE_PAGO cuando todos los
+/// presupuestos aprobados tienen factura, y a FINALIZADO cuando todas están pagas.
+model Invoice {
+  id            String           @id @default(uuid())
+  ticketId      String
+  ticket        Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  quoteId       String           @unique
+  quote         Quote            @relation(fields: [quoteId], references: [id])
+  invoiceNumber String
+  amount        Decimal          @db.Decimal(12, 2)
+  condition     PaymentCondition
+  issueDate     DateTime         @default(now())
+  dueDate       DateTime
+  fileUrl       String
+  uploadedById  String
+  uploadedBy    User             @relation(fields: [uploadedById], references: [id])
+  createdAt     DateTime         @default(now())
+
+  payment Payment?
+
+  @@index([ticketId])
+  @@index([dueDate])
+  @@index([condition])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  invoiceId      String        @unique
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amountPaid     Decimal       @db.Decimal(12, 2)
+  paymentDate    DateTime      @default(now())
+  receiptUrl     String
+  paymentMethod  PaymentMethod
+  reference      String?
+  registeredById String
+  registeredBy   User          @relation(fields: [registeredById], references: [id])
+}
+
+/// Auditoría de transiciones de estado.
+model StatusHistory {
+  id         String        @id @default(uuid())
+  ticketId   String
+  ticket     Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromStatus TicketStatus?
+  toStatus   TicketStatus
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  comment    String?
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+}
