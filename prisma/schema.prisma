@@ -72,6 +72,8 @@ model User {
   email        String   @unique
   name         String
   passwordHash String
+  /// true tras alta o reseteo: obliga a cambiar la contraseña al ingresar.
+  mustChangePassword Boolean @default(false) @map("mustChangePassword")
   role         Role     @default(SOLICITANTE)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())

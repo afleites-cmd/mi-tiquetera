@@ -2,8 +2,9 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 
-const { auth } = NextAuth(authConfig);
 import { NextResponse } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -16,7 +17,10 @@ export default auth((req) => {
   if (req.auth && pathname === "/login") {
     return NextResponse.redirect(new URL("/tickets", req.nextUrl.origin));
   }
-  return NextResponse.next();
+  // El layout lee x-pathname para forzar el cambio de contraseña provisoria.
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: reqHeaders } });
 });
 
 export const config = {

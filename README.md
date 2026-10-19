@@ -47,8 +47,25 @@ Usuarios de prueba (contraseña `1234`):
 | Gerente | gerente@demo.com |
 | Tesorería | tesoreria@demo.com |
 
-> Cambiá esas contraseñas antes de usarlo con datos reales (editá `prisma/seed.ts`
-> o creá usuarios nuevos desde Prisma Studio: `npm run db:studio`).
+> Cambiá esas contraseñas antes de usarlo con datos reales: cada usuario puede
+> hacerlo desde **Mi cuenta** (clic en su nombre, arriba a la derecha).
+
+## Cuentas de usuario
+
+No hay registro público: el **Gerente** administra los usuarios desde el menú
+**Usuarios**.
+
+- **Crear usuario**: nombre, email y rol. El sistema genera una contraseña
+  provisoria (ej. `KRTM-4821`) que se muestra una sola vez para pasársela a la
+  persona. Al ingresar, se le exige elegir una contraseña propia antes de seguir.
+- **Olvidó la contraseña**: el Gerente toca **Nueva contraseña** en la fila del
+  usuario y le pasa la provisoria nueva. La anterior deja de funcionar.
+- **Cambiar rol** o **desactivar** un acceso (el usuario inactivo no puede
+  entrar pero conserva su historial).
+- Cualquier usuario cambia su propia contraseña desde **Mi cuenta**.
+
+Esto evita depender del envío de emails. Si más adelante querés "Olvidé mi
+contraseña" por email, se agrega con un proveedor como Resend.
 
 ## Publicar en Vercel
 
@@ -57,7 +74,6 @@ Usuarios de prueba (contraseña `1234`):
 3. En **Environment Variables** agregá:
    - `DATABASE_URL` → la connection string
    - `AUTH_SECRET` → una clave larga al azar (`openssl rand -base64 32`)
-   - `AUTH_TRUST_HOST` → `true`
 4. **Deploy**. El build ejecuta `prisma generate` automáticamente.
 5. Una sola vez, desde tu computadora con el mismo `DATABASE_URL` en `.env`:
    ```bash
@@ -86,13 +102,17 @@ src/
     tickets.ts             moveTicket() con historial, errores HTTP
     prisma.ts, auth.ts, format.ts, upload-client.ts
   app/
-    login/
+    login/  salir/
+    (app)/usuarios/        administración de usuarios (Gerente)
+    (app)/cuenta/          cambio de contraseña propia
     (app)/tickets/         lista · nuevo · detalle
     (app)/dashboard/tesoreria/
     api/
       tickets/             POST alta · transition · [id]/quotes · [id]/priority
       quotes/[id]/         review (Gerente) · invoice (Mantenimiento)
       invoices/[id]/payment  (Tesorería)
+      users/               alta · [id] rol/activo · [id]/reset-password
+      account/password/
       upload/
   components/
     tickets/ presupuestos/ facturas/ tesoreria/ layout/

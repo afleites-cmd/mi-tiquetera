@@ -39,7 +39,11 @@ export default async function LoginPage({
           <span className="mb-1 block font-medium text-gray-700">Contraseña</span>
           <input name="password" type="password" required autoComplete="current-password" className="w-full rounded-lg border border-gray-300 px-3 py-2" />
         </label>
-        {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">Email o contraseña incorrectos.</p>}
+        {error && (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error === "inactivo" ? "Tu usuario está desactivado. Consultá con el Gerente." : "Email o contraseña incorrectos."}
+          </p>
+        )}
         <button type="submit" className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
           Ingresar
         </button>

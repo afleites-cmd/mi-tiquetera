@@ -18,6 +18,7 @@ export function Nav({ user }: { user: { name: string; role: Role } }) {
     ...(user.role === "TESORERIA" || user.role === "GERENTE"
       ? [{ href: "/dashboard/tesoreria", label: "Tesorería" }]
       : []),
+    ...(user.role === "GERENTE" ? [{ href: "/usuarios", label: "Usuarios" }] : []),
   ];
 
   async function logout() {
@@ -35,9 +36,9 @@ export function Nav({ user }: { user: { name: string; role: Role } }) {
           ))}
         </nav>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-gray-600">
+          <Link href="/cuenta" className="text-gray-600 hover:text-gray-900" title="Mi cuenta">
             {user.name} · <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium">{ROLE_LABEL[user.role]}</span>
-          </span>
+          </Link>
           <form action={logout}>
             <button className="text-gray-500 hover:text-gray-900">Salir</button>
           </form>
