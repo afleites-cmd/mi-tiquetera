@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FormularioCargaFactura from "./FormularioCargaFactura";
 import { fmtDate } from "@/lib/format";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 
 interface ApprovedQuote {
   id: string;
@@ -11,12 +12,15 @@ interface ApprovedQuote {
   coversLabor: boolean;
   coversMaterials: boolean;
   invoice: {
+    id: string;
     invoiceNumber: string;
     amount: number;
     dueDate: string;
     fileUrl: string;
     paid: boolean;
     receiptUrl: string | null;
+    canDelete: boolean;
+    canVoidPayment: boolean;
   } | null;
 }
 
@@ -48,6 +52,12 @@ export function SeccionFacturas({ quotes, canInvoice }: { quotes: ApprovedQuote[
                     <a href={q.invoice.receiptUrl ?? "#"} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 hover:underline">Pagada · comprobante</a>
                   ) : (
                     <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">Pendiente de pago</span>
+                  )}
+                  {q.invoice.canDelete && (
+                    <BotonEliminar url={`/api/invoices/${q.invoice.id}`} confirm={`¿Eliminar la factura ${q.invoice.invoiceNumber}?`} className="border-gray-300 text-gray-600 hover:bg-gray-50" />
+                  )}
+                  {q.invoice.canVoidPayment && (
+                    <BotonEliminar url={`/api/invoices/${q.invoice.id}/payment`} label="Anular pago" confirm={`¿Anular el pago de la factura ${q.invoice.invoiceNumber}? Volverá a Pendiente de pago.`} />
                   )}
                 </div>
               ) : canInvoice ? (

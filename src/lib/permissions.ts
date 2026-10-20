@@ -31,6 +31,11 @@ export function can(user: HasPermissions, perm: Permission): boolean {
   return user.permissions.includes(perm);
 }
 
+/** Quien administra usuarios actúa como administrador general (puede eliminar cualquier cosa). */
+export function isAdmin(user: HasPermissions): boolean {
+  return user.permissions.includes("ADMINISTRAR_USUARIOS");
+}
+
 export function canAny(user: HasPermissions, perms: Permission[]): boolean {
   return perms.some((p) => user.permissions.includes(p));
 }

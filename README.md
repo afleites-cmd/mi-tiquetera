@@ -24,6 +24,11 @@ tildes iniciales; el Gerente los tiene todos y puede ajustarlos para cualquiera.
 | **Tesorería** | Crear tickets, ver Tesorería (vencen en 5 días / cuenta corriente / próximas / pagadas), registrar pagos, ver todos los tickets. |
 | **Gerente** | Todo: además aprueba o rechaza presupuestos y administra usuarios. |
 
+**Si algo se cargó mal**, se puede eliminar: el ticket (quien lo creó mientras está
+*Nuevo*; el Gerente siempre), un presupuesto (quien lo cargó mientras está pendiente),
+una factura (quien la cargó mientras no está paga) o anular un pago (quien registra
+pagos). El ticket vuelve al estado anterior y queda asentado en el historial.
+
 Cada presupuesto aprobado tiene su factura. El ticket pasa a *Pendiente de pago*
 cuando todas están cargadas, y a *Finalizado* cuando todas están pagas.
 Toda transición queda en el historial del ticket.

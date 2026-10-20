@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PaymentCondition, Priority } from "@/generated/prisma/enums";
 import { ModalRegistrarPago } from "./ModalRegistrarPago";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { SemaforoBadge } from "@/components/tickets/Semaforo";
 import { fmtDate } from "@/lib/format";
 
@@ -169,9 +170,14 @@ export function DashboardTesoreria({ groups, canPay }: { groups: InvoiceGroups; 
                   <td className="p-4 text-right font-bold tabular-nums text-gray-900">{ars(r.amount)}</td>
                   <td className="p-4 text-center">
                     {r.paid ? (
-                      <a href={r.receiptUrl ?? "#"} target="_blank" rel="noreferrer" className="text-xs font-semibold text-emerald-700 hover:underline">
-                        Ver comprobante
-                      </a>
+                      <div className="flex items-center justify-center gap-2">
+                        <a href={r.receiptUrl ?? "#"} target="_blank" rel="noreferrer" className="text-xs font-semibold text-emerald-700 hover:underline">
+                          Ver comprobante
+                        </a>
+                        {canPay && (
+                          <BotonEliminar url={`/api/invoices/${r.invoiceId}/payment`} label="Anular" confirm={`¿Anular el pago de ${r.invoiceNumber}?`} />
+                        )}
+                      </div>
                     ) : !canPay ? (
                       <span className="text-xs text-gray-400">Pendiente</span>
                     ) : (

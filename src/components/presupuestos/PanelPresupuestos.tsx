@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuoteStatus, TicketStatus } from "@/generated/prisma/enums";
 import { quoteCoverage, type QuoteCoverage } from "@/lib/workflow";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 
 /**
  * Lista de presupuestos de un ticket con el estado de cobertura.
@@ -21,6 +22,7 @@ export interface QuoteItem {
   coversMaterials: boolean;
   status: QuoteStatus;
   rejectionReason: string | null;
+  canDelete: boolean;
 }
 
 interface Props {
@@ -149,6 +151,9 @@ export function PanelPresupuestos({ ticketId, ticketStatus, canReview: mayReview
                   <button onClick={() => review(q.id, "APROBADO")} disabled={busyId === q.id} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">Aprobar</button>
                   <button onClick={() => review(q.id, "RECHAZADO")} disabled={busyId === q.id} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Rechazar</button>
                 </div>
+              )}
+              {q.canDelete && (
+                <BotonEliminar url={`/api/quotes/${q.id}`} confirm={`¿Eliminar el presupuesto de ${q.supplier}?`} className="border-gray-300 text-gray-600 hover:bg-gray-50" />
               )}
             </div>
           </li>

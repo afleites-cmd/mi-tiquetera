@@ -1,5 +1,7 @@
-// POST /api/invoices/[id]/payment — Tesorería registra el pago y adjunta comprobante.
-// Rol: TESORERIA. Cuando todas las facturas del ticket están pagas → FINALIZADO.
+// POST   /api/invoices/[id]/payment — registra el pago y adjunta comprobante (REGISTRAR_PAGOS).
+//        Cuando todas las facturas del ticket están pagas → FINALIZADO.
+// DELETE /api/invoices/[id]/payment — anula un pago registrado por error (REGISTRAR_PAGOS o admin).
+//        El ticket vuelve a PENDIENTE_PAGO.
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -7,6 +9,8 @@ import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { HttpError, assertCan, moveTicket } from "@/lib/tickets";
+import { isAdmin } from "@/lib/permissions";
+import { deleteAttachment } from "@/lib/blob";
 
 const schema = z.object({
   amountPaid: z.coerce.number().positive().optional(),
@@ -66,6 +70,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (err) {
     if (err instanceof HttpError) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("[invoices/payment]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const { id: invoiceId } = await params;
+
+  try {
+    if (!isAdmin(user)) assertCan(user, "REGISTRAR_PAGOS");
+    const receiptUrl = await prisma.$transaction(async (tx) => {
+      const inv = await tx.invoice.findUnique({ where: { id: invoiceId }, include: { ticket: true, payment: true } });
+      if (!inv) throw new HttpError(404, "Factura no encontrada");
+      if (!inv.payment) throw new HttpError(409, "La factura no tiene pago registrado");
+      await tx.payment.delete({ where: { id: inv.payment.id } });
+      await moveTicket(tx, inv.ticket, "PENDIENTE_PAGO", user, { systemMove: true, comment: `Pago anulado: factura ${inv.invoiceNumber}` });
+      return inv.payment.receiptUrl;
+    });
+    await deleteAttachment(receiptUrl);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    if (err instanceof HttpError) return NextResponse.json({ error: err.message }, { status: err.status });
+    console.error("[payment/delete]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

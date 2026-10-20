@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { PRIORITIES } from "@/lib/workflow";
-import { can } from "@/lib/permissions";
+import { can, isAdmin } from "@/lib/permissions";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { SemaforoBadge } from "@/components/tickets/Semaforo";
 import { EstadoBadge, ESTADO } from "@/components/tickets/EstadoBadge";
 import { CambiarUrgencia } from "@/components/tickets/CambiarUrgencia";
@@ -32,10 +33,13 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   const canLoadQuote =
     can(user, "CARGAR_PRESUPUESTOS") && ["NUEVO", "EN_PRESUPUESTACION", "RECHAZADO"].includes(ticket.status);
   const canEditPriority = can(user, "CAMBIAR_URGENCIA") && ticket.status !== "FINALIZADO";
+  const admin = isAdmin(user);
+  const canDeleteTicket = admin || (ticket.createdById === user.id && ticket.status === "NUEVO");
 
   const quotes = ticket.quotes.map((q) => ({
     id: q.id, supplier: q.supplier, amount: q.amount.toNumber(), detail: q.detail, fileUrl: q.fileUrl,
     coversLabor: q.coversLabor, coversMaterials: q.coversMaterials, status: q.status, rejectionReason: q.rejectionReason,
+    canDelete: !q.invoice && (admin || (q.createdById === user.id && q.status === "PENDIENTE")),
   }));
 
   const approvedQuotes = ticket.quotes
@@ -43,7 +47,12 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     .map((q) => ({
       id: q.id, supplier: q.supplier, amount: q.amount.toNumber(), coversLabor: q.coversLabor, coversMaterials: q.coversMaterials,
       invoice: q.invoice
-        ? { invoiceNumber: q.invoice.invoiceNumber, amount: q.invoice.amount.toNumber(), dueDate: q.invoice.dueDate.toISOString(), fileUrl: q.invoice.fileUrl, paid: !!q.invoice.payment, receiptUrl: q.invoice.payment?.receiptUrl ?? null }
+        ? {
+            id: q.invoice.id, invoiceNumber: q.invoice.invoiceNumber, amount: q.invoice.amount.toNumber(), dueDate: q.invoice.dueDate.toISOString(), fileUrl: q.invoice.fileUrl,
+            paid: !!q.invoice.payment, receiptUrl: q.invoice.payment?.receiptUrl ?? null,
+            canDelete: !q.invoice.payment && (admin || q.invoice.uploadedById === user.id),
+            canVoidPayment: !!q.invoice.payment && (admin || can(user, "REGISTRAR_PAGOS")),
+          }
         : null,
     }));
 
@@ -62,7 +71,17 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
               Creado por {ticket.createdBy.name} el {fmtDate(ticket.createdAt)}
             </p>
           </div>
-          {canEditPriority && <CambiarUrgencia ticketId={ticket.id} current={ticket.priority} />}
+          <div className="flex flex-wrap items-start gap-2">
+            {canEditPriority && <CambiarUrgencia ticketId={ticket.id} current={ticket.priority} />}
+            {canDeleteTicket && (
+              <BotonEliminar
+                url={`/api/tickets/${ticket.id}`}
+                label="Eliminar ticket"
+                redirectTo="/tickets"
+                confirm={ticket.status === "NUEVO" ? "¿Eliminar este ticket?" : "Este ticket ya tiene presupuestos/facturas/pagos. Se eliminará TODO. ¿Continuar?"}
+              />
+            )}
+          </div>
         </div>
         <p className="mt-4 whitespace-pre-wrap text-gray-800">{ticket.description}</p>
         {ticket.priorityNote && (
