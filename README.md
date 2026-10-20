@@ -93,12 +93,13 @@ botón **Sacar foto** que abre la cámara directo y otro para elegir de la galer
 un PDF. Las fotos se comprimen en el teléfono antes de subir (máx. 1600 px, JPEG),
 así una foto de 8 MB viaja como ~300 KB. Las pantallas se adaptan a pantalla chica.
 
-### Archivos adjuntos
+### Archivos adjuntos (Vercel Blob)
 
-Por defecto se guardan en `public/uploads/` (sirve para desarrollo). En Vercel el
-disco es efímero: para producción reemplazá el cuerpo de
-`src/app/api/upload/route.ts` por Supabase Storage o Vercel Blob manteniendo la
-respuesta `{ url }`. Nada más cambia.
+En Vercel no hay disco, así que los adjuntos van a **Vercel Blob** (1 GB gratis).
+Una sola vez: en el proyecto de Vercel → pestaña **Storage** → **Create Database**
+→ **Blob** → nombre cualquiera → **Create** → **Connect to project**. Eso crea la
+variable `BLOB_READ_WRITE_TOKEN`; después hacé un **Redeploy** (Deployments → ⋯ →
+Redeploy) para que la tome. En local, sin esa variable, se guardan en `public/uploads/`.
 
 ## Estructura
 
