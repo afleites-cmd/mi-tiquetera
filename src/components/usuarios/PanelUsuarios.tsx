@@ -31,6 +31,7 @@ export function PanelUsuarios({ usuarios, meId }: { usuarios: UsuarioRow[]; meId
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [provisoria, setProvisoria] = useState<{ email: string; name: string; provisoria: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
 
   async function call(path: string, init: RequestInit) {
     const res = await fetch(path, { ...init, headers: { "Content-Type": "application/json" } });
@@ -56,6 +57,14 @@ export function PanelUsuarios({ usuarios, meId }: { usuarios: UsuarioRow[]; meId
     setBusy(id);
     try { await call(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify(data) }); router.refresh(); }
     catch (err) { setError((err as Error).message); } finally { setBusy(null); }
+  }
+
+  async function saveName() {
+    if (!editing) return;
+    const name = editing.name.trim();
+    if (name.length < 2) return setError("El nombre debe tener al menos 2 caracteres.");
+    await patch(editing.id, { name });
+    setEditing(null);
   }
 
   async function reset(u: UsuarioRow) {
@@ -116,7 +125,28 @@ export function PanelUsuarios({ usuarios, meId }: { usuarios: UsuarioRow[]; meId
               const me = u.id === meId;
               return (
                 <tr key={u.id} className={u.active ? "" : "opacity-50"}>
-                  <td className="p-3 font-medium">{u.name}{me && <span className="ml-2 text-xs text-gray-400">(vos)</span>}</td>
+                  <td className="p-3 font-medium">
+                    {editing?.id === u.id ? (
+                      <input
+                        autoFocus
+                        value={editing.name}
+                        onChange={(e) => setEditing({ id: u.id, name: e.target.value })}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditing(null); }}
+                        onBlur={saveName}
+                        className="w-full rounded-md border border-blue-400 px-2 py-1 text-sm"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditing({ id: u.id, name: u.name })}
+                        title="Clic para editar el nombre"
+                        className="rounded px-1 text-left hover:bg-gray-100"
+                      >
+                        {u.name}
+                        {me && <span className="ml-2 text-xs text-gray-400">(vos)</span>}
+                      </button>
+                    )}
+                  </td>
                   <td className="p-3 text-gray-600">{u.email}</td>
                   <td className="p-3">
                     <select
@@ -149,7 +179,7 @@ export function PanelUsuarios({ usuarios, meId }: { usuarios: UsuarioRow[]; meId
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-gray-500">{roleLabel("GERENTE")}s pueden crear usuarios, cambiar roles, desactivar accesos y generar contraseñas nuevas. Un usuario inactivo no puede ingresar pero conserva su historial.</p>
+      <p className="text-xs text-gray-500">Hacé clic sobre un nombre para editarlo. {roleLabel("GERENTE")}s pueden crear usuarios, cambiar roles, desactivar accesos y generar contraseñas nuevas. Un usuario inactivo no puede ingresar pero conserva su historial.</p>
     </div>
   );
 }

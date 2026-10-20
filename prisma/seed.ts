@@ -12,10 +12,10 @@ const prisma = new PrismaClient({
 const SEDES = ["Sede Central", "Sucursal Norte", "Sucursal Sur"];
 
 const USERS: { email: string; name: string; role: Role }[] = [
-  { email: "solicitante@demo.com", name: "Sofía Solicitante", role: "SOLICITANTE" },
-  { email: "mantenimiento@demo.com", name: "Martín Mantenimiento", role: "MANTENIMIENTO" },
-  { email: "gerente@demo.com", name: "Gabriela Gerente", role: "GERENTE" },
-  { email: "tesoreria@demo.com", name: "Tomás Tesorería", role: "TESORERIA" },
+  { email: "solicitante@demo.com", name: "Solicitante", role: "SOLICITANTE" },
+  { email: "mantenimiento@demo.com", name: "Mantenimiento", role: "MANTENIMIENTO" },
+  { email: "gerente@demo.com", name: "Gerente", role: "GERENTE" },
+  { email: "tesoreria@demo.com", name: "Tesorería", role: "TESORERIA" },
 ];
 
 async function main() {

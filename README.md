@@ -60,7 +60,7 @@ No hay registro público: el **Gerente** administra los usuarios desde el menú
   persona. Al ingresar, se le exige elegir una contraseña propia antes de seguir.
 - **Olvidó la contraseña**: el Gerente toca **Nueva contraseña** en la fila del
   usuario y le pasa la provisoria nueva. La anterior deja de funcionar.
-- **Cambiar rol** o **desactivar** un acceso (el usuario inactivo no puede
+- **Editar el nombre** (clic sobre el nombre en la lista), **cambiar rol** o **desactivar** un acceso (el usuario inactivo no puede
   entrar pero conserva su historial).
 - Cualquier usuario cambia su propia contraseña desde **Mi cuenta**.
 
