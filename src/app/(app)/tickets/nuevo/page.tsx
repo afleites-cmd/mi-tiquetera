@@ -9,7 +9,7 @@ export default async function NuevoTicketPage() {
   const locations = await prisma.location.findMany({ orderBy: { name: "asc" } });
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto max-w-3xl p-4 sm:p-6">
       <h1 className="mb-4 text-2xl font-bold">Nuevo ticket</h1>
       <FormularioTicket locations={locations} />
     </main>

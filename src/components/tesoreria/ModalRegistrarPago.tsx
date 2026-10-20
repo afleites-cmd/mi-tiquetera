@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PaymentMethod } from "@/generated/prisma/enums";
 import { uploadFile } from "@/lib/upload-client";
+import { AdjuntoInput } from "@/components/ui/AdjuntoInput";
 import type { InvoiceRow } from "./DashboardTesoreria";
 
 const METHODS: { value: PaymentMethod; label: string }[] = [
@@ -89,10 +90,7 @@ export function ModalRegistrarPago({
           <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Nro. de transferencia / cheque" className={input} />
         </label>
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Comprobante (PDF / imagen)</span>
-          <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} className="block w-full text-sm" />
-        </label>
+        <AdjuntoInput label="Comprobante (foto o PDF)" value={receipt} onChange={setReceipt} required />
 
         {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

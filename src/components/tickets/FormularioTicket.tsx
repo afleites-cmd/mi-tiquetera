@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Priority } from "@/generated/prisma/enums";
 import { SemaforoSelector } from "./Semaforo";
 import { uploadFile } from "@/lib/upload-client";
+import { AdjuntoInput } from "@/components/ui/AdjuntoInput";
 
 export function FormularioTicket({ locations }: { locations: { id: string; name: string }[] }) {
   const router = useRouter();
@@ -71,15 +72,12 @@ export function FormularioTicket({ locations }: { locations: { id: string; name:
         <SemaforoSelector value={priority} onChange={setPriority} />
       </fieldset>
 
-      <div>
-        <label className={label} htmlFor="photo">Foto (opcional)</label>
-        <input id="photo" type="file" accept="image/jpeg,image/png" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} className="block w-full text-sm text-gray-600" />
-      </div>
+      <AdjuntoInput label="Foto del problema (opcional)" value={photo} onChange={setPhoto} allowPdf={false} />
 
       {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="flex justify-end">
-        <button type="submit" disabled={busy} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+        <button type="submit" disabled={busy} className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto sm:py-2">
           {busy ? "Creando…" : "Crear ticket"}
         </button>
       </div>

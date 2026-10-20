@@ -1,7 +1,10 @@
-/** Sube un archivo a /api/upload y devuelve su URL pública. */
+import { compressImage } from "./image-client";
+
+/** Sube un archivo a /api/upload (comprimiendo imágenes) y devuelve su URL pública. */
 export async function uploadFile(file: File): Promise<string> {
+  const toSend = await compressImage(file);
   const fd = new FormData();
-  fd.append("file", file);
+  fd.append("file", toSend);
   const res = await fetch("/api/upload", { method: "POST", body: fd });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

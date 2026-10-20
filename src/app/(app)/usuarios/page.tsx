@@ -11,7 +11,7 @@ export default async function UsuariosPage() {
     orderBy: [{ active: "desc" }, { name: "asc" }],
   });
   return (
-    <main className="mx-auto max-w-6xl space-y-4 p-6">
+    <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
       <h1 className="text-2xl font-bold">Usuarios</h1>
       <PanelUsuarios usuarios={usuarios} meId={me.id} />
     </main>

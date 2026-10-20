@@ -40,7 +40,7 @@ export default async function TicketsPage({
   ).sort(byPriorityThenAge);
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4 p-6">
+    <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
       {denied && (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">No tenés permiso para esa sección.</p>
       )}
@@ -65,15 +65,15 @@ export default async function TicketsPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-100 text-xs font-semibold uppercase text-gray-600">
             <tr>
               <th className="p-3">Urgencia</th>
-              <th className="p-3">Sede / Lugar</th>
+              <th className="hidden p-3 sm:table-cell">Sede / Lugar</th>
               <th className="p-3">Descripción</th>
               <th className="p-3">Estado</th>
-              <th className="p-3">Creado</th>
+              <th className="hidden p-3 md:table-cell">Creado</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -83,16 +83,18 @@ export default async function TicketsPage({
             {tickets.map((t) => (
               <tr key={t.id} className="hover:bg-gray-50">
                 <td className="p-3"><SemaforoBadge priority={t.priority} /></td>
-                <td className="p-3">
+                <td className="hidden p-3 sm:table-cell">
                   <div className="font-medium">{t.location.name}</div>
                   <div className="text-xs text-gray-500">{t.floor} · {t.specificPlace}</div>
                 </td>
                 <td className="p-3">
                   <Link href={`/tickets/${t.id}`} className="line-clamp-2 text-blue-700 hover:underline">{t.description}</Link>
-                  <div className="text-xs text-gray-400">por {t.createdBy.name}</div>
+                  <div className="text-xs text-gray-400">
+                    <span className="sm:hidden">{t.location.name} · {t.specificPlace} · </span>por {t.createdBy.name}
+                  </div>
                 </td>
                 <td className="p-3"><EstadoBadge status={t.status} /></td>
-                <td className="p-3 text-gray-500">{fmtDate(t.createdAt)}</td>
+                <td className="hidden p-3 text-gray-500 md:table-cell">{fmtDate(t.createdAt)}</td>
               </tr>
             ))}
           </tbody>

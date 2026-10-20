@@ -13,7 +13,7 @@ import { getSessionUser } from "@/lib/auth";
  * Supabase Storage / S3 manteniendo el contrato { url }.
  */
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png"]);
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 25 * 1024 * 1024;
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Sólo PDF, JPG o PNG" }, { status: 415 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Archivo mayor a 10 MB" }, { status: 413 });
+    return NextResponse.json({ error: "Archivo mayor a 25 MB" }, { status: 413 });
   }
 
   const ext = path.extname(file.name) || (file.type === "application/pdf" ? ".pdf" : ".bin");

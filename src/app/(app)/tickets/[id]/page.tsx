@@ -48,7 +48,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     }));
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 p-6">
+    <main className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
       {/* Cabecera */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">

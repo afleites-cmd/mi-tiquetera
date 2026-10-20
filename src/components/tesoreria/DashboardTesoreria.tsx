@@ -89,7 +89,7 @@ export function DashboardTesoreria({ groups, canPay }: { groups: InvoiceGroups; 
   const rows = groups[tab];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-2 text-3xl font-bold text-gray-800">Panel de Tesorería y Vencimientos</h1>
         <p className="mb-6 text-gray-600">
@@ -119,7 +119,7 @@ export function DashboardTesoreria({ groups, canPay }: { groups: InvoiceGroups; 
           ))}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
           <table className="w-full border-collapse text-left">
             <thead className="border-b border-gray-200 bg-gray-100 text-xs font-semibold uppercase text-gray-600">
               <tr>

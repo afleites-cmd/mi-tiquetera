@@ -125,7 +125,7 @@ export function PanelUsuarios({ usuarios, meId }: { usuarios: UsuarioRow[]; meId
 
       {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-100 text-xs font-semibold uppercase text-gray-600">
             <tr>

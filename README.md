@@ -86,6 +86,13 @@ contraseña" por email, se agrega con un proveedor como Resend.
    computadora con el mismo `DATABASE_URL` en `.env`, `npm run db:seed`; o ejecutá
    el SQL de `prisma/seed.sql` en el editor SQL de Neon.
 
+### Uso desde el celular
+
+Todos los adjuntos (foto del problema, presupuesto, factura, comprobante) tienen un
+botón **Sacar foto** que abre la cámara directo y otro para elegir de la galería o
+un PDF. Las fotos se comprimen en el teléfono antes de subir (máx. 1600 px, JPEG),
+así una foto de 8 MB viaja como ~300 KB. Las pantallas se adaptan a pantalla chica.
+
 ### Archivos adjuntos
 
 Por defecto se guardan en `public/uploads/` (sirve para desarrollo). En Vercel el

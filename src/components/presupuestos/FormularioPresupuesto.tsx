@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { uploadFile } from "@/lib/upload-client";
+import { AdjuntoInput } from "@/components/ui/AdjuntoInput";
 
 /**
  * Carga de presupuesto — Rol: Encargado de Mantenimiento.
@@ -106,10 +107,7 @@ export default function FormularioPresupuesto({
         <textarea id="detail" rows={3} value={detail} onChange={(e) => setDetail(e.target.value)} className={input} />
       </div>
 
-      <div>
-        <label className={label} htmlFor="qfile">Adjunto (PDF / JPG / PNG)</label>
-        <input id="qfile" type="file" accept="application/pdf,image/jpeg,image/png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="block w-full text-sm text-gray-600" />
-      </div>
+      <AdjuntoInput label="Presupuesto (foto o PDF)" value={file} onChange={setFile} required />
 
       {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

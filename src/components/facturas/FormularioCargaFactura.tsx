@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PaymentCondition } from "@/generated/prisma/enums";
 import { PAYMENT_CONDITIONS, calculateDueDate } from "@/lib/workflow";
 import { uploadFile } from "@/lib/upload-client";
+import { AdjuntoInput } from "@/components/ui/AdjuntoInput";
 import { ars, fmtDate } from "@/lib/format";
 
 /**
@@ -20,8 +21,6 @@ interface Props {
   onSuccess?: () => void;
 }
 
-const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-const MAX_MB = 10;
 
 export default function FormularioCargaFactura({ quote, onSuccess }: Props) {
   const router = useRouter();
@@ -33,31 +32,13 @@ export default function FormularioCargaFactura({ quote, onSuccess }: Props) {
   const [issueDate, setIssueDate] = useState(today);
   const [condition, setCondition] = useState<PaymentCondition>("INMEDIATO");
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // Vista previa del adjunto; el object URL se libera al cambiar o desmontar.
-  useEffect(() => {
-    if (!file) return setPreviewUrl(null);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
 
   const dueDate = useMemo(
     () => calculateDueDate(new Date(`${issueDate}T00:00:00`), condition),
     [issueDate, condition],
   );
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null;
-    setError(null);
-    if (!f) return setFile(null);
-    if (!ALLOWED_TYPES.includes(f.type)) { setFile(null); return setError("Sólo se admiten PDF, JPG o PNG."); }
-    if (f.size > MAX_MB * 1024 * 1024) { setFile(null); return setError(`El archivo supera los ${MAX_MB} MB.`); }
-    setFile(f);
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -158,29 +139,9 @@ export default function FormularioCargaFactura({ quote, onSuccess }: Props) {
           </fieldset>
         </div>
 
-        {/* Adjunto + vista previa */}
-        <div className="space-y-3">
-          <label className={label} htmlFor="file">Factura adjunta (PDF / JPG / PNG, máx. {MAX_MB} MB)</label>
-          <input
-            id="file"
-            type="file"
-            accept={ALLOWED_TYPES.join(",")}
-            onChange={onFileChange}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-gray-200"
-          />
-          <div className="flex h-72 items-center justify-center overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-50">
-            {!previewUrl && <span className="text-sm text-gray-400">Vista previa del archivo</span>}
-            {previewUrl && file?.type === "application/pdf" && (
-              <iframe src={previewUrl} title="Vista previa PDF" className="h-full w-full" />
-            )}
-            {previewUrl && file?.type.startsWith("image/") && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewUrl} alt="Vista previa de la factura" className="max-h-full max-w-full object-contain" />
-            )}
-          </div>
-          {file && (
-            <p className="truncate text-xs text-gray-500">{file.name} · {(file.size / 1024).toFixed(0)} KB</p>
-          )}
+        {/* Adjunto */}
+        <div>
+          <AdjuntoInput label="Factura (foto o PDF)" value={file} onChange={(f) => { setError(null); setFile(f); }} required />
         </div>
       </div>
 
