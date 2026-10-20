@@ -83,7 +83,7 @@ const TABS: { key: keyof InvoiceGroups; label: string }[] = [
   { key: "paid", label: "Pagadas" },
 ];
 
-export function DashboardTesoreria({ groups }: { groups: InvoiceGroups }) {
+export function DashboardTesoreria({ groups, canPay }: { groups: InvoiceGroups; canPay: boolean }) {
   const [tab, setTab] = useState<keyof InvoiceGroups>("dueSoon");
   const [selected, setSelected] = useState<InvoiceRow | null>(null);
   const rows = groups[tab];
@@ -172,6 +172,8 @@ export function DashboardTesoreria({ groups }: { groups: InvoiceGroups }) {
                       <a href={r.receiptUrl ?? "#"} target="_blank" rel="noreferrer" className="text-xs font-semibold text-emerald-700 hover:underline">
                         Ver comprobante
                       </a>
+                    ) : !canPay ? (
+                      <span className="text-xs text-gray-400">Pendiente</span>
                     ) : (
                       <button
                         onClick={() => setSelected(r)}

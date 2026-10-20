@@ -8,7 +8,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole, moveTicket } from "@/lib/tickets";
+import { HttpError, assertCan, moveTicket } from "@/lib/tickets";
 import { QUOTE_LOADABLE_STATUSES, quoteCoverage } from "@/lib/workflow";
 
 const schema = z
@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: Ctx) {
   }
 
   try {
-    assertRole(user, ["MANTENIMIENTO"]);
+    assertCan(user, "CARGAR_PRESUPUESTOS");
 
     const quote = await prisma.$transaction(async (tx) => {
       const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });

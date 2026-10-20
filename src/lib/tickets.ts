@@ -1,9 +1,10 @@
 // Helpers compartidos por los Route Handlers: cambio de estado con auditoría,
 // y errores HTTP tipados.
 
-import { Prisma, Role, TicketStatus } from "@/generated/prisma/client";
+import { Permission, Prisma, TicketStatus } from "@/generated/prisma/client";
 import type { SessionUser } from "./auth";
 import { validateTransition } from "./workflow";
+import { can } from "./permissions";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -39,12 +40,9 @@ export async function moveTicket(
 
   const allowed = opts.systemMove
     ? true
-    : validateTransition(ticket.status, target, user.role);
+    : validateTransition(ticket.status, target, user.permissions);
   if (!allowed) {
-    throw new HttpError(
-      403,
-      `Transición ${ticket.status} -> ${target} no permitida para el rol ${user.role}`,
-    );
+    throw new HttpError(403, `No tenés permiso para pasar el ticket de ${ticket.status} a ${target}`);
   }
 
   const updated = await tx.ticket.update({
@@ -63,6 +61,6 @@ export async function moveTicket(
   return updated;
 }
 
-export function assertRole(user: SessionUser, roles: Role[]) {
-  if (!roles.includes(user.role)) throw new HttpError(403, "Rol sin permiso");
+export function assertCan(user: SessionUser, perm: Permission) {
+  if (!can(user, perm)) throw new HttpError(403, "No tenés permiso para esta acción");
 }

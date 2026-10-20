@@ -5,8 +5,9 @@ import { z } from "zod";
 import { Role } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole } from "@/lib/tickets";
+import { HttpError, assertCan } from "@/lib/tickets";
 import { generarProvisoria, hashPassword } from "@/lib/passwords";
+import { ROLE_DEFAULTS } from "@/lib/permissions";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -18,9 +19,9 @@ export async function GET() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   try {
-    assertRole(user, ["GERENTE"]);
+    assertCan(user, "ADMINISTRAR_USUARIOS");
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, active: true, mustChangePassword: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, permissions: true, active: true, mustChangePassword: true, createdAt: true },
       orderBy: [{ active: "desc" }, { name: "asc" }],
     });
     return NextResponse.json(users);
@@ -38,13 +39,13 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten() }, { status: 400 });
 
   try {
-    assertRole(user, ["GERENTE"]);
+    assertCan(user, "ADMINISTRAR_USUARIOS");
     const exists = await prisma.user.findUnique({ where: { email: parsed.data.email } });
     if (exists) throw new HttpError(409, "Ya existe un usuario con ese email");
 
     const provisoria = generarProvisoria();
     const created = await prisma.user.create({
-      data: { ...parsed.data, passwordHash: await hashPassword(provisoria), mustChangePassword: true },
+      data: { ...parsed.data, permissions: ROLE_DEFAULTS[parsed.data.role], passwordHash: await hashPassword(provisoria), mustChangePassword: true },
       select: { id: true, name: true, email: true, role: true },
     });
     // La provisoria se devuelve una sola vez, para que el Gerente se la pase al usuario.

@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole, moveTicket } from "@/lib/tickets";
+import { HttpError, assertCan, moveTicket } from "@/lib/tickets";
 import { quoteCoverage, statusAfterReview } from "@/lib/workflow";
 
 const schema = z
@@ -35,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { decision, reason } = parsed.data;
 
   try {
-    assertRole(user, ["GERENTE"]);
+    assertCan(user, "APROBAR_PRESUPUESTOS");
 
     const result = await prisma.$transaction(async (tx) => {
       const quote = await tx.quote.findUnique({

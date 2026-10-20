@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Role } from "@/generated/prisma/client";
 import { signOut } from "@/auth";
+import { can, type HasPermissions } from "@/lib/permissions";
 
 const ROLE_LABEL: Record<Role, string> = {
   SOLICITANTE: "Solicitante",
@@ -9,16 +10,12 @@ const ROLE_LABEL: Record<Role, string> = {
   TESORERIA: "Tesorería",
 };
 
-export function Nav({ user }: { user: { name: string; role: Role } }) {
+export function Nav({ user }: { user: { name: string; role: Role } & HasPermissions }) {
   const links = [
     { href: "/tickets", label: "Tickets" },
-    ...(user.role === "SOLICITANTE" || user.role === "MANTENIMIENTO"
-      ? [{ href: "/tickets/nuevo", label: "Nuevo ticket" }]
-      : []),
-    ...(user.role === "TESORERIA" || user.role === "GERENTE"
-      ? [{ href: "/dashboard/tesoreria", label: "Tesorería" }]
-      : []),
-    ...(user.role === "GERENTE" ? [{ href: "/usuarios", label: "Usuarios" }] : []),
+    ...(can(user, "CREAR_TICKETS") ? [{ href: "/tickets/nuevo", label: "+ Nuevo ticket" }] : []),
+    ...(can(user, "VER_TESORERIA") ? [{ href: "/dashboard/tesoreria", label: "Tesorería" }] : []),
+    ...(can(user, "ADMINISTRAR_USUARIOS") ? [{ href: "/usuarios", label: "Usuarios" }] : []),
   ];
 
   async function logout() {

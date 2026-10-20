@@ -7,8 +7,8 @@ import { z } from "zod";
 import { Priority } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole } from "@/lib/tickets";
-import { PRIORITIES, PRIORITY_EDITOR_ROLES } from "@/lib/workflow";
+import { HttpError, assertCan } from "@/lib/tickets";
+import { PRIORITIES } from "@/lib/workflow";
 
 const schema = z.object({
   priority: z.nativeEnum(Priority),
@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { priority, note } = parsed.data;
 
   try {
-    assertRole(user, PRIORITY_EDITOR_ROLES);
+    assertCan(user, "CAMBIAR_URGENCIA");
 
     const ticket = await prisma.$transaction(async (tx) => {
       const current = await tx.ticket.findUnique({ where: { id } });

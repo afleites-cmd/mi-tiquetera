@@ -1,6 +1,8 @@
-import type { Role } from "@/generated/prisma/client";
+import type { Permission, Role } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { can } from "@/lib/permissions";
 
 /**
  * Usuario autenticado de la request, tomado de la sesión (nunca del body).
@@ -10,13 +12,24 @@ export interface SessionUser {
   email: string;
   name: string;
   role: Role;
+  permissions: Permission[];
+  active: boolean;
+  mustChangePassword: boolean;
 }
 
+/**
+ * Lee el usuario de la base en cada request (una consulta chica): así un cambio de
+ * permisos, rol o desactivación hecho por el Gerente aplica de inmediato, sin re-login.
+ */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth();
-  const u = session?.user;
-  if (!u?.id || !u.email) return null;
-  return { id: u.id, email: u.email, name: u.name ?? u.email, role: u.role };
+  const id = session?.user?.id;
+  if (!id) return null;
+  const u = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, email: true, name: true, role: true, permissions: true, active: true, mustChangePassword: true },
+  });
+  return u ?? null;
 }
 
 export class ForbiddenError extends Error {
@@ -30,10 +43,10 @@ export class UnauthorizedError extends Error {
  * Para páginas (Server Components): redirige al login si no hay sesión y a /tickets
  * si el rol no corresponde.
  */
-export async function requireRole(roles: Role[]): Promise<SessionUser> {
+export async function requirePermission(perm: Permission): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (!roles.includes(user.role)) redirect("/tickets?denied=1");
+  if (!can(user, perm)) redirect("/tickets?denied=1");
   return user;
 }
 

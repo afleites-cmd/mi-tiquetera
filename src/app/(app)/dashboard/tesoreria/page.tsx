@@ -3,7 +3,8 @@
 // el client component DashboardTesoreria.
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { DUE_ALERT_DAYS, PAYMENT_CONDITIONS, daysUntilDue } from "@/lib/workflow";
 import {
   DashboardTesoreria,
@@ -13,7 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function TesoreriaPage() {
-  await requireRole(["TESORERIA"]);
+  const user = await requirePermission("VER_TESORERIA");
 
   const since = new Date();
   since.setDate(since.getDate() - 60);
@@ -64,5 +65,5 @@ export default async function TesoreriaPage() {
     paid: rows.filter((r) => r.paid),
   };
 
-  return <DashboardTesoreria groups={groups} />;
+  return <DashboardTesoreria groups={groups} canPay={can(user, "REGISTRAR_PAGOS")} />;
 }

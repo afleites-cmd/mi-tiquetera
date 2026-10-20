@@ -4,6 +4,7 @@ import "dotenv/config";
 import { PrismaClient, Role } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
+import { ROLE_DEFAULTS } from "../src/lib/permissions";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -27,8 +28,8 @@ async function main() {
   for (const u of USERS) {
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { name: u.name, role: u.role },
-      create: { ...u, passwordHash },
+      update: { name: u.name, role: u.role, permissions: ROLE_DEFAULTS[u.role] },
+      create: { ...u, permissions: ROLE_DEFAULTS[u.role], passwordHash },
     });
   }
 

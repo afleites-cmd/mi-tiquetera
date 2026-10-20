@@ -3,6 +3,7 @@ import type { TicketStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { byPriorityThenAge } from "@/lib/workflow";
+import { can } from "@/lib/permissions";
 import { SemaforoBadge } from "@/components/tickets/Semaforo";
 import { EstadoBadge } from "@/components/tickets/EstadoBadge";
 import { fmtDate } from "@/lib/format";
@@ -25,11 +26,12 @@ export default async function TicketsPage({
   const user = await requireUser();
   const { todos, denied } = await searchParams;
 
-  const statuses = todos ? null : DEFAULT_FILTER[user.role];
+  const veTodos = can(user, "VER_TODOS_LOS_TICKETS");
+  const statuses = todos || !veTodos ? null : DEFAULT_FILTER[user.role];
   const tickets = (
     await prisma.ticket.findMany({
       where: {
-        ...(user.role === "SOLICITANTE" ? { createdById: user.id } : {}),
+        ...(veTodos ? {} : { createdById: user.id }),
         ...(statuses ? { status: { in: statuses } } : {}),
       },
       include: { location: true, createdBy: { select: { name: true } } },
@@ -43,12 +45,19 @@ export default async function TicketsPage({
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">No tenés permiso para esa sección.</p>
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Tickets</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Tickets</h1>
+          {can(user, "CREAR_TICKETS") && (
+            <Link href="/tickets/nuevo" className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
+              + Nuevo ticket
+            </Link>
+          )}
+        </div>
         <div className="flex gap-2 text-sm">
           <Link href="/tickets" className={`rounded-lg px-3 py-1.5 ${!todos ? "bg-blue-600 text-white" : "border bg-white"}`}>
-            {user.role === "SOLICITANTE" ? "Mis tickets" : "Para mí"}
+            {veTodos ? "Para mí" : "Mis tickets"}
           </Link>
-          {user.role !== "SOLICITANTE" && (
+          {veTodos && (
             <Link href="/tickets?todos=1" className={`rounded-lg px-3 py-1.5 ${todos ? "bg-blue-600 text-white" : "border bg-white"}`}>
               Todos
             </Link>

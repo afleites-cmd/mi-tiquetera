@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { FormularioTicket } from "@/components/tickets/FormularioTicket";
 
 export const dynamic = "force-dynamic";
 
 export default async function NuevoTicketPage() {
-  await requireRole(["SOLICITANTE", "MANTENIMIENTO"]);
+  await requirePermission("CREAR_TICKETS");
   const locations = await prisma.location.findMany({ orderBy: { name: "asc" } });
 
   return (

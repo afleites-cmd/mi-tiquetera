@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { QuoteStatus, Role, TicketStatus } from "@/generated/prisma/enums";
+import type { QuoteStatus, TicketStatus } from "@/generated/prisma/enums";
 import { quoteCoverage, type QuoteCoverage } from "@/lib/workflow";
 
 /**
@@ -26,7 +26,8 @@ export interface QuoteItem {
 interface Props {
   ticketId: string;
   ticketStatus: TicketStatus;
-  userRole: Role;
+  canReview: boolean;
+  canSend: boolean;
   quotes: QuoteItem[];
 }
 
@@ -48,7 +49,7 @@ function Coverage({ c }: { c: QuoteCoverage }) {
   );
 }
 
-export function PanelPresupuestos({ ticketId, ticketStatus, userRole, quotes }: Props) {
+export function PanelPresupuestos({ ticketId, ticketStatus, canReview: mayReview, canSend: maySend, quotes }: Props) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +96,8 @@ export function PanelPresupuestos({ ticketId, ticketStatus, userRole, quotes }: 
     }
   }
 
-  const canReview = userRole === "GERENTE" && ticketStatus === "PENDIENTE_APROBACION";
-  const canSend = userRole === "MANTENIMIENTO" && ticketStatus === "EN_PRESUPUESTACION";
+  const canReview = mayReview && ticketStatus === "PENDIENTE_APROBACION";
+  const canSend = maySend && ticketStatus === "EN_PRESUPUESTACION";
 
   const statusBadge: Record<QuoteStatus, string> = {
     PENDIENTE: "bg-amber-100 text-amber-700",

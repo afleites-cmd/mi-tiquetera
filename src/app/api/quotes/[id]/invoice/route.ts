@@ -8,7 +8,7 @@ import { z } from "zod";
 import { PaymentCondition, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole, moveTicket } from "@/lib/tickets";
+import { HttpError, assertCan, moveTicket } from "@/lib/tickets";
 import { calculateDueDate } from "@/lib/workflow";
 
 const schema = z.object({
@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const data = parsed.data;
 
   try {
-    assertRole(user, ["MANTENIMIENTO"]);
+    assertCan(user, "CARGAR_FACTURAS");
 
     const invoice = await prisma.$transaction(async (tx) => {
       const quote = await tx.quote.findUnique({

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { PRIORITIES } from "@/lib/workflow";
+import { can } from "@/lib/permissions";
 import { SemaforoBadge } from "@/components/tickets/Semaforo";
 import { EstadoBadge, ESTADO } from "@/components/tickets/EstadoBadge";
 import { CambiarUrgencia } from "@/components/tickets/CambiarUrgencia";
@@ -26,11 +27,11 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     },
   });
   if (!ticket) notFound();
-  if (user.role === "SOLICITANTE" && ticket.createdById !== user.id) notFound();
+  if (!can(user, "VER_TODOS_LOS_TICKETS") && ticket.createdById !== user.id) notFound();
 
   const canLoadQuote =
-    user.role === "MANTENIMIENTO" && ["NUEVO", "EN_PRESUPUESTACION", "RECHAZADO"].includes(ticket.status);
-  const canEditPriority = (user.role === "MANTENIMIENTO" || user.role === "GERENTE") && ticket.status !== "FINALIZADO";
+    can(user, "CARGAR_PRESUPUESTOS") && ["NUEVO", "EN_PRESUPUESTACION", "RECHAZADO"].includes(ticket.status);
+  const canEditPriority = can(user, "CAMBIAR_URGENCIA") && ticket.status !== "FINALIZADO";
 
   const quotes = ticket.quotes.map((q) => ({
     id: q.id, supplier: q.supplier, amount: q.amount.toNumber(), detail: q.detail, fileUrl: q.fileUrl,
@@ -74,12 +75,18 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       </section>
 
       {/* Presupuestos */}
-      <PanelPresupuestos ticketId={ticket.id} ticketStatus={ticket.status} userRole={user.role} quotes={quotes} />
+      <PanelPresupuestos
+        ticketId={ticket.id}
+        ticketStatus={ticket.status}
+        canReview={can(user, "APROBAR_PRESUPUESTOS")}
+        canSend={can(user, "CARGAR_PRESUPUESTOS")}
+        quotes={quotes}
+      />
       {canLoadQuote && <FormularioPresupuesto ticketId={ticket.id} />}
 
       {/* Facturas (desde AUTORIZADO en adelante) */}
       {["AUTORIZADO", "PENDIENTE_PAGO", "FINALIZADO"].includes(ticket.status) && (
-        <SeccionFacturas quotes={approvedQuotes} userRole={user.role} />
+        <SeccionFacturas quotes={approvedQuotes} canInvoice={can(user, "CARGAR_FACTURAS")} />
       )}
 
       {/* Historial */}

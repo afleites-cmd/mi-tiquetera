@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole } from "@/lib/tickets";
+import { HttpError, assertCan } from "@/lib/tickets";
 import { generarProvisoria, hashPassword } from "@/lib/passwords";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,7 +11,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
 
   try {
-    assertRole(user, ["GERENTE"]);
+    assertCan(user, "ADMINISTRAR_USUARIOS");
     const provisoria = generarProvisoria();
     const target = await prisma.user.update({
       where: { id },

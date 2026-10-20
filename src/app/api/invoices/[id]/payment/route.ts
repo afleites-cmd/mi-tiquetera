@@ -6,7 +6,7 @@ import { z } from "zod";
 import { PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole, moveTicket } from "@/lib/tickets";
+import { HttpError, assertCan, moveTicket } from "@/lib/tickets";
 
 const schema = z.object({
   amountPaid: z.coerce.number().positive().optional(),
@@ -27,7 +27,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const data = parsed.data;
 
   try {
-    assertRole(user, ["TESORERIA"]);
+    assertCan(user, "REGISTRAR_PAGOS");
 
     const payment = await prisma.$transaction(async (tx) => {
       const invoice = await tx.invoice.findUnique({

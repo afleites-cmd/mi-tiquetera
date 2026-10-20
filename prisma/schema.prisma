@@ -55,6 +55,19 @@ enum Priority {
   ROJO
 }
 
+/// Permisos individuales. El rol define los tildes iniciales; el Gerente puede ajustarlos por usuario.
+enum Permission {
+  CREAR_TICKETS
+  CARGAR_PRESUPUESTOS
+  APROBAR_PRESUPUESTOS
+  CARGAR_FACTURAS
+  REGISTRAR_PAGOS
+  VER_TESORERIA
+  CAMBIAR_URGENCIA
+  VER_TODOS_LOS_TICKETS
+  ADMINISTRAR_USUARIOS
+}
+
 enum QuoteStatus {
   PENDIENTE
   APROBADO
@@ -77,6 +90,7 @@ model User {
   /// true tras alta o reseteo: obliga a cambiar la contraseña al ingresar.
   mustChangePassword Boolean @default(false) @map("mustChangePassword")
   role         Role     @default(SOLICITANTE)
+  permissions  Permission[] @default([])
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 

@@ -1,10 +1,10 @@
-// POST /api/tickets — alta de ticket (Solicitante o Mantenimiento).
+// POST /api/tickets — alta de ticket (cualquier usuario puede reportar).
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Priority } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole } from "@/lib/tickets";
+import { HttpError, assertCan } from "@/lib/tickets";
 
 const schema = z.object({
   locationId: z.string().uuid(),
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    assertRole(user, ["SOLICITANTE", "MANTENIMIENTO"]);
+    assertCan(user, "CREAR_TICKETS");
     const ticket = await prisma.$transaction(async (tx) => {
       const t = await tx.ticket.create({ data: { ...parsed.data, createdById: user.id } });
       await tx.statusHistory.create({

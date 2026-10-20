@@ -1,15 +1,17 @@
-// PATCH /api/users/[id] — cambiar rol o activar/desactivar (Gerente)
+// PATCH /api/users/[id] — nombre, rol (resetea permisos a los del rol), permisos, activo
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { Role } from "@/generated/prisma/client";
+import { Permission, Role } from "@/generated/prisma/client";
+import { ROLE_DEFAULTS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { HttpError, assertRole } from "@/lib/tickets";
+import { HttpError, assertCan } from "@/lib/tickets";
 
 const schema = z.object({
   role: z.nativeEnum(Role).optional(),
   active: z.boolean().optional(),
   name: z.string().trim().min(2).max(100).optional(),
+  permissions: z.array(z.nativeEnum(Permission)).optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,14 +23,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
 
   try {
-    assertRole(user, ["GERENTE"]);
-    if (id === user.id && (parsed.data.active === false || (parsed.data.role && parsed.data.role !== "GERENTE"))) {
-      throw new HttpError(409, "No podés desactivarte ni quitarte el rol de Gerente a vos mismo");
+    assertCan(user, "ADMINISTRAR_USUARIOS");
+    const d = parsed.data;
+    if (id === user.id) {
+      const pierdeAdmin = d.permissions && !d.permissions.includes("ADMINISTRAR_USUARIOS");
+      const cambiaRol = d.role && d.role !== "GERENTE";
+      if (d.active === false || pierdeAdmin || cambiaRol) {
+        throw new HttpError(409, "No podés desactivarte ni quitarte la administración de usuarios a vos mismo");
+      }
     }
+    // Cambiar el rol vuelve los permisos a los del rol nuevo (salvo que se manden explícitos).
+    const data = { ...d, ...(d.role && !d.permissions ? { permissions: ROLE_DEFAULTS[d.role] } : {}) };
     const updated = await prisma.user.update({
       where: { id },
-      data: parsed.data,
-      select: { id: true, name: true, email: true, role: true, active: true },
+      data,
+      select: { id: true, name: true, email: true, role: true, permissions: true, active: true },
     });
     return NextResponse.json(updated);
   } catch (err) {

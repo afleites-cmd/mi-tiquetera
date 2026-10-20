@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { PanelUsuarios } from "@/components/usuarios/PanelUsuarios";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsuariosPage() {
-  const me = await requireRole(["GERENTE"]);
+  const me = await requirePermission("ADMINISTRAR_USUARIOS");
   const usuarios = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, mustChangePassword: true },
+    select: { id: true, name: true, email: true, role: true, permissions: true, active: true, mustChangePassword: true },
     orderBy: [{ active: "desc" }, { name: "asc" }],
   });
   return (

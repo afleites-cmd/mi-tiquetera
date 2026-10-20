@@ -1,8 +1,8 @@
 // ENTREGABLE 1: Máquina de Estados / Lógica de Transiciones
-// Única fuente de verdad para: transiciones permitidas por rol, condiciones de pago,
+// Única fuente de verdad para: transiciones permitidas por permiso, condiciones de pago,
 // cálculo de vencimientos y umbral de alerta de Tesorería. La usan el backend y el frontend.
 
-import { PaymentCondition, Priority, QuoteStatus, Role, TicketStatus } from "@/generated/prisma/enums";
+import { PaymentCondition, Permission, Priority, QuoteStatus, TicketStatus } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
 // Semáforo de urgencia
@@ -35,9 +35,6 @@ export const PRIORITIES: Record<
   },
 };
 
-/** Roles que pueden cambiar la prioridad después de creado el ticket. */
-export const PRIORITY_EDITOR_ROLES: Role[] = [Role.MANTENIMIENTO, Role.GERENTE];
-
 /** Comparador para ordenar listas: ROJO primero, luego por antigüedad. */
 export function byPriorityThenAge<T extends { priority: Priority; createdAt: Date }>(a: T, b: T) {
   const d = PRIORITIES[a.priority].order - PRIORITIES[b.priority].order;
@@ -48,38 +45,40 @@ export function byPriorityThenAge<T extends { priority: Priority; createdAt: Dat
 // Transiciones
 // ---------------------------------------------------------------------------
 
+/// Cada transición exige un permiso (no un rol): así el Gerente ajusta quién puede qué.
 export const ALLOWED_TRANSITIONS: Record<
   TicketStatus,
-  { next: TicketStatus[]; roles: Role[] }
+  { next: TicketStatus[]; permission: Permission | null }
 > = {
-  NUEVO: {
-    next: [TicketStatus.EN_PRESUPUESTACION],
-    roles: [Role.MANTENIMIENTO],
-  },
-  EN_PRESUPUESTACION: {
-    next: [TicketStatus.PENDIENTE_APROBACION],
-    roles: [Role.MANTENIMIENTO],
-  },
-  PENDIENTE_APROBACION: {
-    next: [TicketStatus.AUTORIZADO, TicketStatus.RECHAZADO],
-    roles: [Role.GERENTE],
-  },
-  AUTORIZADO: {
-    next: [TicketStatus.PENDIENTE_PAGO],
-    roles: [Role.MANTENIMIENTO],
-  },
-  PENDIENTE_PAGO: {
-    next: [TicketStatus.FINALIZADO],
-    roles: [Role.TESORERIA],
-  },
-  FINALIZADO: { next: [], roles: [] },
-  /// RECHAZADO: el Gerente rechazó y no quedan presupuestos que completen la cobertura.
-  /// Mantenimiento debe cargar otro(s); al cargar uno el ticket vuelve a EN_PRESUPUESTACION.
-  RECHAZADO: {
-    next: [TicketStatus.EN_PRESUPUESTACION],
-    roles: [Role.MANTENIMIENTO],
-  },
+  NUEVO: { next: [TicketStatus.EN_PRESUPUESTACION], permission: Permission.CARGAR_PRESUPUESTOS },
+  EN_PRESUPUESTACION: { next: [TicketStatus.PENDIENTE_APROBACION], permission: Permission.CARGAR_PRESUPUESTOS },
+  PENDIENTE_APROBACION: { next: [TicketStatus.AUTORIZADO, TicketStatus.RECHAZADO], permission: Permission.APROBAR_PRESUPUESTOS },
+  AUTORIZADO: { next: [TicketStatus.PENDIENTE_PAGO], permission: Permission.CARGAR_FACTURAS },
+  PENDIENTE_PAGO: { next: [TicketStatus.FINALIZADO], permission: Permission.REGISTRAR_PAGOS },
+  FINALIZADO: { next: [], permission: null },
+  /// RECHAZADO: se rechazó y no quedan presupuestos que completen la cobertura.
+  /// Hay que cargar otro(s); al cargar uno el ticket vuelve a EN_PRESUPUESTACION.
+  RECHAZADO: { next: [TicketStatus.EN_PRESUPUESTACION], permission: Permission.CARGAR_PRESUPUESTOS },
 };
+
+export function validateTransition(
+  currentStatus: TicketStatus,
+  targetStatus: TicketStatus,
+  permissions: Permission[],
+): boolean {
+  const t = ALLOWED_TRANSITIONS[currentStatus];
+  if (!t || !t.permission) return false;
+  return t.next.includes(targetStatus) && permissions.includes(t.permission);
+}
+
+/** Transiciones disponibles para un usuario desde un estado (para armar botones en la UI). */
+export function nextStatusesFor(
+  currentStatus: TicketStatus,
+  permissions: Permission[],
+): TicketStatus[] {
+  const t = ALLOWED_TRANSITIONS[currentStatus];
+  return t && t.permission && permissions.includes(t.permission) ? t.next : [];
+}
 
 // ---------------------------------------------------------------------------
 // Cobertura de presupuestos (mano de obra / materiales)
@@ -137,25 +136,6 @@ export const QUOTE_LOADABLE_STATUSES: TicketStatus[] = [
   TicketStatus.EN_PRESUPUESTACION,
   TicketStatus.RECHAZADO,
 ];
-
-export function validateTransition(
-  currentStatus: TicketStatus,
-  targetStatus: TicketStatus,
-  userRole: Role,
-): boolean {
-  const t = ALLOWED_TRANSITIONS[currentStatus];
-  if (!t) return false;
-  return t.next.includes(targetStatus) && t.roles.includes(userRole);
-}
-
-/** Transiciones disponibles para un rol desde un estado (para armar botones en la UI). */
-export function nextStatusesFor(
-  currentStatus: TicketStatus,
-  userRole: Role,
-): TicketStatus[] {
-  const t = ALLOWED_TRANSITIONS[currentStatus];
-  return t && t.roles.includes(userRole) ? t.next : [];
-}
 
 // ---------------------------------------------------------------------------
 // Condiciones de pago y vencimientos

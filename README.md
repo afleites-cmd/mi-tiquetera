@@ -14,12 +14,15 @@ NUEVO → EN_PRESUPUESTACION → PENDIENTE_APROBACION → AUTORIZADO → PENDIEN
                  └──── RECHAZADO ◄────┘
 ```
 
-| Rol | Hace |
+Los **permisos son por usuario** (tildes en el menú Usuarios). El rol sólo fija los
+tildes iniciales; el Gerente los tiene todos y puede ajustarlos para cualquiera.
+
+| Rol | Permisos iniciales |
 |---|---|
-| **Solicitante** | Crea tickets con semáforo de urgencia (🟢 Normal · 🟡 Urgente · 🔴 Emergencia). Ve sólo los suyos. |
-| **Mantenimiento** | Carga presupuestos (cada uno tilda si cubre *mano de obra*, *materiales* o ambos), envía a aprobación, carga facturas. |
-| **Gerente** | Aprueba o rechaza cada presupuesto. El ticket se autoriza cuando los aprobados cubren ambos rubros. |
-| **Tesorería** | Ve facturas agrupadas (vencen en 5 días / cuenta corriente / próximas / pagadas), registra pagos con comprobante. |
+| **Solicitante** | Crear tickets (con semáforo 🟢 Normal · 🟡 Urgente · 🔴 Emergencia). Ve sólo los suyos. |
+| **Mantenimiento** | Crear tickets, cargar presupuestos (tilda *mano de obra*, *materiales* o ambos), cargar facturas, cambiar urgencia, ver todos los tickets. |
+| **Tesorería** | Crear tickets, ver Tesorería (vencen en 5 días / cuenta corriente / próximas / pagadas), registrar pagos, ver todos los tickets. |
+| **Gerente** | Todo: además aprueba o rechaza presupuestos y administra usuarios. |
 
 Cada presupuesto aprobado tiene su factura. El ticket pasa a *Pendiente de pago*
 cuando todas están cargadas, y a *Finalizado* cuando todas están pagas.
@@ -60,6 +63,8 @@ No hay registro público: el **Gerente** administra los usuarios desde el menú
   persona. Al ingresar, se le exige elegir una contraseña propia antes de seguir.
 - **Olvidó la contraseña**: el Gerente toca **Nueva contraseña** en la fila del
   usuario y le pasa la provisoria nueva. La anterior deja de funcionar.
+- **Permisos**: botón "Permisos" en la fila → tildes individuales. "Restablecer" vuelve
+  a los del rol. Cambiar el rol también restablece los tildes.
 - **Editar el nombre** (clic sobre el nombre en la lista), **cambiar rol** o **desactivar** un acceso (el usuario inactivo no puede
   entrar pero conserva su historial).
 - Cualquier usuario cambia su propia contraseña desde **Mi cuenta**.

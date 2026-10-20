@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { Role } from "@/generated/prisma/enums";
 import FormularioCargaFactura from "./FormularioCargaFactura";
 import { fmtDate } from "@/lib/format";
 
@@ -24,7 +23,7 @@ interface ApprovedQuote {
 const ars = (n: number) => n.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
 /** Por cada presupuesto aprobado: su factura (o el botón para cargarla). */
-export function SeccionFacturas({ quotes, userRole }: { quotes: ApprovedQuote[]; userRole: Role }) {
+export function SeccionFacturas({ quotes, canInvoice }: { quotes: ApprovedQuote[]; canInvoice: boolean }) {
   const [loading, setLoading] = useState<string | null>(null);
 
   return (
@@ -51,7 +50,7 @@ export function SeccionFacturas({ quotes, userRole }: { quotes: ApprovedQuote[];
                     <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">Pendiente de pago</span>
                   )}
                 </div>
-              ) : userRole === "MANTENIMIENTO" ? (
+              ) : canInvoice ? (
                 <button onClick={() => setLoading(loading === q.id ? null : q.id)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
                   {loading === q.id ? "Cerrar" : "Cargar factura"}
                 </button>
